@@ -1,19 +1,36 @@
 const express = require("express");
 const morgan = require("morgan");
+require("dotenv").config();
+
 const app = express();
 
-const { postRouter } = require("./src/routers/postsRouter");
+const { connectMongo } = require("./src/db/connection");
+const { errorHandler } = require("./src/helpers/apiHelpers");
+
+const { postsRouter } = require("./src/routers/postsRouter");
 
 const PORT = process.env.PORT || 7777;
+
+//services;
 
 app.use(express.json());
 app.use(morgan("tiny"));
 
-app.use("/api/posts", postRouter);
+app.use("/api/posts", postsRouter);
 
-app.listen(PORT, (err) => {
-  if (err) {
-    console.error(err);
+app.use(errorHandler);
+
+const start = async () => {
+  try {
+    await connectMongo();
+
+    app.listen(PORT, (error) => {
+      if (error) console.error("Error at server launch", error);
+      console.log(`Server works at port ${PORT}!`);
+    });
+  } catch (error) {
+    console.error(`Failed to launch application with error: ${error.message}`);
   }
-  console.log(`Server works at port ${PORT}!`);
-});
+};
+
+start();
